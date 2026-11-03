@@ -4,7 +4,7 @@
 Haz doble clic en `ver-sitio.bat`. Se abre en http://localhost:8080. Para cerrarla, cierra la ventana negra.
 
 ## Cambiar precios, teléfono o WhatsApp
-1. Edita `datos.js` (los textos están en `contenido.js`).
+1. Edita `datos.js` (los textos están en `contenido.js`; las respuestas del chat, el cotizador y los mensajes de WhatsApp también se arman desde ahí).
 2. Abre una terminal en esta carpeta y ejecuta `npm run build`.
 3. Sube de nuevo el contenido de `dist/`.
 

@@ -62,6 +62,8 @@ const I = {
   tv: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 21h8M9 2l3 4 3-4"/>',
   fan: '<circle cx="12" cy="11" r="8"/><circle cx="12" cy="11" r="1.300"/><path d="M12 19v2M8 22h8M12 9.700c0-2 .8-3.700 2-3.700s2 1.500.5 3-2.500 1-2.500.7zM13.200 11.600c1.700 1 2.800 2.600 2.200 3.600s-2.300.6-2.900-1.400-.1-2.400.7-2.200zM10.800 11.600c-1.700 1-3.700 1.100-4.200.1s.7-2.300 2.700-1.800 1.800 1.400 1.500 1.700z"/>',
   wash: '<rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="4.500"/><path d="M7.500 6.500h.01M10.500 6.500h.01"/>',
+  enviar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3 10 14M21 3l-6.500 18-4.500-7-7-4.500z"/></svg>',
+  sol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.200" fill="currentColor"/><path d="M12 2.500v2.300M12 19.200v2.300M2.500 12h2.300M19.200 12h2.300M5.300 5.300l1.600 1.600M17.100 17.100l1.600 1.600M5.300 18.700l1.600-1.600M17.100 6.900l1.600-1.600"/></svg>',
 };
 const icono = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
 
@@ -70,6 +72,40 @@ const ORDEN = Object.keys(FOTO);
 const RUTAS = { 404: '/', inicio: '/', bungalows: '/bungalows/', experiencias: '/experiencias/', contacto: '/contacto/', privacidad: '/privacidad/' };
 const url = (t, r) => t.prefijo + RUTAS[r];
 const waUrl = (texto) => `https://wa.me/${D.whatsapp}?text=${encodeURIComponent(texto)}`;
+const MAPA = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Hotel De Sol a Sol, Los Órganos, Piura, Perú')}`;
+// Servicio del cotizador que corresponde a cada actividad de exp.lista (mismo orden)
+const LISTA_COT = ['paddle', 'yoga', 'bus', 'surf', 'kite'];
+
+// Palabras clave del chat, sin tildes y en ambos idiomas. Gana la intención con más coincidencias y,
+// en empate, la que va primero. Las de cada bungalow pesan doble: "precio del familiar" habla de ese bungalow.
+const CLAVES = [
+  ['persona', ['persona', 'humano', 'asesor', 'agente', 'hablar con', 'human', 'agent', 'someone']],
+  ['cotizar', ['cotiz', 'presupuesto', 'quote']],
+  ['reservar', ['reserv', 'disponib', 'separar', 'book', 'availab']],
+  ['b:terraza', ['terraza', 'terrace']],
+  ['b:familiar', ['familiar', 'familia', 'family', 'ninos', 'hijos', 'kids', 'children', 'litera', 'bunk']],
+  ['b:grupal', ['grupal', 'grupo', 'amigos', 'group', 'friends']],
+  ['b:triple', ['triple', 'tres personas', 'three people']],
+  ['b:vista', ['vista', 'view', 'frente al mar', 'oceano', 'ocean']],
+  ['b:doble', ['doble', 'twin', 'individuales', 'dos camas', 'single bed']],
+  ['b:matrimonial', ['matrimonial', 'pareja', 'luna de miel', 'couple', 'double bed', 'queen', 'honeymoon']],
+  ['paquete', ['paquete', 'package', 'promocion', 'combo']],
+  ['ballenas', ['ballena', 'whale', 'avistamiento']],
+  ['tortugas', ['tortuga', 'turtle', 'nuro', 'snorkel']],
+  ['surf', ['surf', 'kite', 'olas', 'waves', 'tabla']],
+  ['descuentos', ['descuento', 'oferta', 'discount', 'paddle', 'promo']],
+  ['tours', ['tour', 'actividad', 'excursion', 'paseo', 'yoga', 'que hacer', 'activit', 'things to do', 'pesca', 'kayak', 'fishing']],
+  ['desayuno', ['desayuno', 'comida', 'almuerzo', 'cena', 'restaurante', 'breakfast', 'food', 'meal', 'lunch', 'dinner']],
+  ['pagos', ['pago', 'pagar', 'tarjeta', 'transferencia', 'yape', 'plin', 'deposito', 'adelanto', 'pay', 'card']],
+  ['servicios', ['incluye', 'servicio', 'wifi', 'internet', 'piscina', 'pool', 'tv', 'cable', 'agua caliente', 'ventilador', 'lavanderia', 'bano', 'include', 'amenit', 'hot water', 'laundry', 'bathroom', 'fan']],
+  ['precios', ['precio', 'cuanto', 'cuesta', 'costo', 'tarifa', 'soles', 'price', 'rate', 'cost', 'how much']],
+  ['bungalows', ['bungalow', 'habitacion', 'cuarto', 'cama', 'hospedaje', 'alojamiento', 'room', 'bed', 'accommodation']],
+  ['llevar', ['llevar', 'equipaje', 'maleta', 'bring', 'luggage']],
+  ['llegar', ['llegar', 'llego', 'ubicacion', 'ubicad', 'direccion', 'donde', 'mapa', 'bus', 'avion', 'aeropuerto', 'auto', 'carro', 'terminal', 'mototaxi', 'get there', 'location', 'address', 'where', 'directions', 'airport', 'plane', 'car', 'map']],
+  ['contacto', ['telefono', 'numero', 'celular', 'llamar', 'correo', 'email', 'contact', 'instagram', 'facebook', 'redes', 'phone', 'call', 'whatsapp']],
+  ['gracias', ['gracias', 'thank', 'genial', 'perfecto', 'great', 'excelente']],
+  ['hola', ['hola', 'buenas', 'buenos dias', 'hi', 'hello', 'hey', 'good morning']],
+];
 
 // Logo de una red social; con conTexto muestra también el nombre al lado
 function red(n, nombre, href, conTexto = false, texto = nombre) {
@@ -78,14 +114,26 @@ function red(n, nombre, href, conTexto = false, texto = nombre) {
 
 // Respuestas automáticas del chat, armadas con los mismos datos que muestra la web
 function chatCfg(t) {
-  const c = t.chat, e = t.exp, lista = t.habitaciones.lista;
+  const c = t.chat, e = t.exp, lista = t.habitaciones.lista, faq = t.contacto.faq;
+  const precio = (k) => (D.precios[k] ? `S/${D.precios[k]} ${t.porNoche}` : t.consultar);
+  const dcto = e.dcto.map(([p, d]) => `• ${p}: ${d}`);
   return {
-    hola: c.hola, otra: c.otra, saludo: c.saludo,
-    respuestas: {
-      precios: [c.preciosIntro, ...ORDEN.map((k) => `${lista[k][0]}: ${D.precios[k] ? `S/${D.precios[k]} ${t.porNoche}` : t.consultar}`)].join('\n'),
-      servicios: t.habitaciones.texto,
-      tours: [`${e.eyebrow}: ${e.texto}`, e.temporada, `${e.otras}: ${e.lista.join(', ')}.`].join('\n\n'),
-      llegar: t.contacto.rutas.map(([a, x]) => `${a}: ${x}`).join('\n\n'),
+    ...c, claves: CLAVES, orden: ORDEN, servicios: t.cotizar.opciones, mapa: MAPA, urlBungalows: url(t, 'bungalows'),
+    bungalows: Object.fromEntries(ORDEN.map((k) => [k, { n: lista[k][0], r: `${lista[k][0]}\n${lista[k][1]}\n\n${c.camas}: ${lista[k][2]}\n${precio(k)}` }])),
+    // Las de ballenas, tortugas, surf y llevar reutilizan las preguntas frecuentes 2, 5, 3 y 6 de la página de contacto
+    r: {
+      precios: [c.preciosIntro, ...ORDEN.map((k) => `• ${lista[k][0]}: ${precio(k)}`)].join('\n'),
+      servicios: [t.habitaciones.texto, '', ...t.servicios.map(([, n, d]) => `• ${n}: ${d}`)].join('\n'),
+      bungalows: c.bungalowsIntro,
+      tours: [`${e.titulo} · ${e.eyebrow}. ${e.texto}`, `${e.otras}: ${e.lista.join(', ')}.`, [`${e.dctoT}:`, ...dcto].join('\n')].join('\n\n'),
+      paquete: [`${e.titulo} · ${e.eyebrow}`, e.texto, `${e.incluye}: ${e.items.join(', ')}.`, `${e.dia1[0]}: ${e.dia1[1]}.\n${e.dia2[0]}: ${e.dia2[1]}.`].join('\n\n'),
+      ballenas: [faq[1][1], `${e.dctoT}: ${e.dcto[0][0]} (${e.dcto[0][1]}). ${e.dctoNota}`].join('\n\n'),
+      tortugas: [faq[4][1], `${e.dia2[1]}: ${e.dia2[2]}`].join('\n\n'),
+      surf: [faq[2][1], `${e.otras}: ${e.lista.join(', ')}.`].join('\n\n'),
+      descuentos: [`${e.dctoT}:`, ...dcto, '', e.dctoNota].join('\n'),
+      llegar: [`${t.contacto.direccion}: ${t.contacto.dirTexto}`, ...t.contacto.rutas.map(([a, x]) => `${a}: ${x}`)].join('\n\n'),
+      contacto: [c.contactoIntro, ...D.telefonos.map((x) => `• ${x.texto}`), `• ${D.correo}`].join('\n'),
+      llevar: faq[5][1], desayuno: c.desayuno, pagos: c.pagos, persona: c.persona, hola: c.hola2, gracias: c.gracias,
     },
   };
 }
@@ -102,11 +150,31 @@ const subheroFoto = (foto) => `<div class="subhero__foto">${img(foto, '', '100vw
 function chat(t) {
   const c = t.chat;
   return `<section class="chat" id="chat" aria-label="${esc(c.titulo)}" hidden>
-  <header class="chat__cabecera"><span class="red red--wa">${I.wa}</span><div><p class="chat__nombre">${c.titulo}</p><p class="chat__estado">${c.estado}</p></div><button class="chat__cerrar" type="button" aria-label="${t.cerrar}">×</button></header>
+  <header class="chat__cabecera"><span class="chat__avatar">${I.sol}</span><div><p class="chat__nombre">${c.titulo}</p><p class="chat__estado">${c.estado}</p></div><button class="chat__cerrar" type="button" aria-label="${t.cerrar}">×</button></header>
   <div class="chat__registro" aria-live="polite"></div>
-  <div class="chat__opciones">${Object.entries(c.op).map(([k, v]) => `<button type="button" data-op="${k}">${v}</button>`).join('')}</div>
-  <form class="chat__form"><label class="oculto" for="chat-texto">${c.escribe}</label><input id="chat-texto" name="texto" placeholder="${esc(c.escribe)}" autocomplete="off"><button type="submit" aria-label="${esc(c.enviar)}" title="${esc(c.enviar)}">${I.wa}</button></form>
-</section>`;
+  <div class="chat__opciones"></div>
+  <form class="chat__form"><label class="oculto" for="chat-texto">${c.escribe}</label><input id="chat-texto" name="texto" placeholder="${esc(c.escribe)}" autocomplete="off" maxlength="500"><button type="submit" aria-label="${esc(c.enviar)}" title="${esc(c.enviar)}">${I.enviar}</button></form>
+</section>
+<div class="chat-aviso" hidden><button class="chat-aviso__abrir" type="button">${c.aviso}</button><button class="chat-aviso__cerrar" type="button" aria-label="${esc(c.avisoCerrar)}">×</button></div>`;
+}
+
+function formCotizar(t) {
+  const f = t.cotizar;
+  const op = Object.entries(f.opciones).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+  const pers = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `<option${n === 2 ? ' selected' : ''}>${n}</option>`).join('') + `<option>${t.form.masDe}</option>`;
+  return `<form class="reserva cotizar js-cotizar" novalidate>
+  <p class="reserva__titulo">${f.titulo}</p>
+  <div class="reserva__campos">
+    <div class="campo campo--ancho"><label for="cot-servicio">${f.servicio}</label><select id="cot-servicio" name="servicio" required><option value="">${f.elegir}</option>${op}</select></div>
+    <div class="campo"><label for="cot-fecha">${f.fecha}</label><input id="cot-fecha" name="fecha" type="date"></div>
+    <div class="campo"><label for="cot-personas">${f.personas}</label><select id="cot-personas" name="personas">${pers}</select></div>
+    <div class="campo campo--ancho"><label for="cot-nombre">${f.nombre}</label><input id="cot-nombre" name="nombre" autocomplete="name" required></div>
+    <div class="campo campo--ancho"><label for="cot-detalles">${f.detalles}</label><textarea id="cot-detalles" name="detalles" placeholder="${esc(f.ayuda)}"></textarea></div>
+    <button class="btn btn--wa" type="submit">${I.wa}${f.enviar}</button>
+  </div>
+  <p class="error" role="alert" hidden></p>
+  <div class="reserva__pie"><span>${f.nota}</span></div>
+</form>`;
 }
 
 function formReserva(t, idBase) {
@@ -149,7 +217,8 @@ function pagina(t, ruta, cuerpo, { titulo, desc, noindex = false } = {}) {
   const nav = ['inicio', 'bungalows', 'experiencias', 'contacto'].map((r) => `<li><a href="${url(t, r)}"${r === ruta ? ' aria-current="page"' : ''}>${t.nav[r]}</a></li>`).join('');
   const preciosCfg = JSON.stringify({
     whatsapp: D.whatsapp, correo: D.correo, precios: D.precios,
-    t: { ...t.form, hola: t.contacto.msgHola, asunto: t.contacto.asunto, errForm: t.contacto.errForm }, chat: chatCfg(t),
+    t: { ...t.form, hola: t.contacto.msgHola, asunto: t.contacto.asunto, errForm: t.contacto.errForm, motivo: t.contacto.motivo },
+    cot: t.cotizar, chat: chatCfg(t),
   }).replace(/</g, '\\u003c');
   const ld = ruta === 'inicio' ? `<script type="application/ld+json">${JSON.stringify({
     '@context': 'https://schema.org', '@type': 'LodgingBusiness', name: 'De Sol a Sol Bungalows', url: D.dominio + '/', image: D.dominio + '/assets/img/compartir.jpg',
@@ -205,7 +274,7 @@ ${cuerpo}
   <div class="envoltura">
     <div class="pie__rejilla">
       <div><p class="pie__marca">De Sol a Sol Bungalows</p><p>${t.pie.lema}</p><p>${esc(t.contacto.dirTexto)}</p></div>
-      <div><h2>${t.pie.explora}</h2><ul>${['inicio', 'bungalows', 'experiencias', 'contacto'].map((r) => `<li><a href="${url(t, r)}">${t.nav[r]}</a></li>`).join('')}</ul></div>
+      <div><h2>${t.pie.explora}</h2><ul>${['inicio', 'bungalows', 'experiencias', 'contacto'].map((r) => `<li><a href="${url(t, r)}">${t.nav[r]}</a></li>`).join('')}<li><button class="pie__enlace" type="button" data-cotizar="">${t.cotizar.botonServicio}</button></li></ul></div>
       <div><h2>${t.pie.contacto}</h2><ul>
         ${D.telefonos.map((x) => `<li><a href="tel:${x.enlace}">${x.texto}</a></li>`).join('')}
         <li><a href="mailto:${D.correo}">${D.correo}</a></li>
@@ -218,6 +287,7 @@ ${cuerpo}
 ${chat(t)}
 <a class="wa-flotante" href="${waUrl(t.chat.saludo)}" target="_blank" rel="noopener" aria-label="${esc(t.wa)}" title="${esc(t.wa)}" aria-controls="chat" aria-expanded="false">${I.wa}</a>
 <dialog class="dialogo" id="dialogo-reserva" aria-label="${esc(t.form.titulo)}"><button class="cerrar" type="button" aria-label="${t.cerrar}">×</button>${formReserva(t, 'dlg')}</dialog>
+<dialog class="dialogo" id="dialogo-cotizar" aria-label="${esc(t.cotizar.titulo)}"><button class="cerrar" type="button" aria-label="${t.cerrar}">×</button>${formCotizar(t)}</dialog>
 <script type="application/json" id="config">${preciosCfg}</script>
 <script src="/assets/main.js" defer></script>
 </body>
@@ -255,14 +325,14 @@ ${destacados(t)}
   <div class="mosaico">${img('ballena', e.aBallena, '(max-width: 980px) 90vw, 45vw')}${img('tortugas', e.aTortuga, '(max-width: 980px) 45vw, 22vw')}${img('paddle', e.aPaddle, '(max-width: 980px) 45vw, 22vw')}</div>
   <div><p class="eyebrow">${h.expEyebrow}</p><h2>${h.expTitulo}</h2><p class="lead">${h.expTexto}</p>
     <div class="descuentos">${e.dcto.map(([p, d]) => `<div class="descuento"><b>${p}</b>${d}</div>`).join('')}</div>
-    <p class="nota">${e.dctoNota}</p><p class="con-aire"><a class="btn btn--mar" href="${url(t, 'experiencias')}">${h.expVer}</a></p>
+    <p class="nota">${e.dctoNota}</p><p class="con-aire acciones"><a class="btn btn--mar" href="${url(t, 'experiencias')}">${h.expVer}</a><button class="btn btn--linea" type="button" data-cotizar="paquete">${t.cotizar.botonTour}</button></p>
   </div>
 </div></section>
 <section class="seccion seccion--arena"><div class="envoltura">
   <div class="cabecera-sec"><h2>${h.galeria}</h2></div>
   <div class="galeria">${fotos.map(([f, i]) => `<button type="button" data-foto="/assets/img/${f}-1600.webp" aria-label="${esc(t.verFoto)}: ${esc(t.galeriaAlts[i])}">${img(f, t.galeriaAlts[i], '(max-width: 620px) 50vw, 40vw')}<span class="galeria__pie" aria-hidden="true">${esc(t.galeriaAlts[i])}</span></button>`).join('')}</div>
 </div></section>
-<section class="seccion cta"><div class="cta__foto">${img('rancho', '', '100vw', { ancho: 1600 })}</div><div class="envoltura"><h2>${h.ctaTitulo}</h2><p class="lead">${h.ctaTexto}</p><button class="btn btn--sol" type="button" data-reservar="">${t.reservar}</button></div></section>
+<section class="seccion cta"><div class="cta__foto">${img('rancho', '', '100vw', { ancho: 1600 })}</div><div class="envoltura"><h2>${h.ctaTitulo}</h2><p class="lead">${h.ctaTexto}</p><p class="acciones"><button class="btn btn--sol" type="button" data-reservar="">${t.reservar}</button><button class="btn btn--cristal" type="button" data-cotizar="">${t.cotizar.botonServicio}</button></p></div></section>
 <dialog class="visor" id="visor"><button class="cerrar" type="button" aria-label="${t.cerrar}">×</button><img src="/assets/img/bungalow-fachada-480.webp" alt=""></dialog>`;
 }
 
@@ -275,18 +345,18 @@ function bungalows(t) {
 
 function experiencias(t) {
   const e = t.exp;
-  const dia = (d, f, a) => `<article class="dia">${img(f, a, '(max-width: 620px) 100vw, 50vw')}<div><p class="eyebrow">${d[0]}</p><h3>${d[1]}</h3><p>${d[2]}</p></div></article>`;
+  const dia = (d, f, a, k) => `<article class="dia">${img(f, a, '(max-width: 620px) 100vw, 50vw')}<div><p class="eyebrow">${d[0]}</p><h3>${d[1]}</h3><p>${d[2]}</p><p class="con-aire"><button class="btn btn--linea" type="button" data-cotizar="${k}">${t.cotizar.boton}: ${esc(t.cotizar.opciones[k])}</button></p></div></article>`;
   return `<section class="subhero subhero--foto">${subheroFoto('ballena')}<div class="envoltura dividido">
-  <div><p class="eyebrow">${e.eyebrow}</p><h1>${e.titulo}</h1><p class="lead">${e.texto}</p><p class="con-aire"><a class="btn btn--wa" href="https://wa.me/${D.whatsapp}?text=${encodeURIComponent(e.eyebrow + ': ' + e.titulo)}" target="_blank" rel="noopener">${I.wa}${e.consultar}</a></p></div>
+  <div><p class="eyebrow">${e.eyebrow}</p><h1>${e.titulo}</h1><p class="lead">${e.texto}</p><p class="con-aire"><button class="btn btn--wa" type="button" data-cotizar="paquete">${I.wa}${e.consultar}</button></p></div>
   <div><h2>${e.incluye}</h2><ul class="incluye">${e.items.map((x) => `<li>${I.ok}${x}</li>`).join('')}</ul></div>
 </div></section>
 <section class="seccion seccion--arena"><div class="envoltura">
   <h2>${e.itin}</h2>
-  <div class="dias">${dia(e.dia1, 'ballena', e.aBallena)}${dia(e.dia2, 'tortugas', e.aTortuga)}</div>
+  <div class="dias">${dia(e.dia1, 'ballena', e.aBallena, 'ballenas')}${dia(e.dia2, 'tortugas', e.aTortuga, 'tortugas')}</div>
   <p class="aviso">${e.temporada}</p>
 </div></section>
 <section class="seccion"><div class="envoltura dividido">
-  <div><h2>${e.otras}</h2><p class="lead">${e.otrasTexto}</p><ul class="pastillas">${e.lista.map((x) => `<li>${x}</li>`).join('')}</ul>
+  <div><h2>${e.otras}</h2><p class="lead">${e.otrasTexto}</p><ul class="pastillas">${e.lista.map((x, i) => `<li><button class="pastilla" type="button" data-cotizar="${LISTA_COT[i]}">${x}<span>${t.cotizar.boton}</span></button></li>`).join('')}</ul>
     <h3 class="con-aire">${e.dctoT}</h3><div class="descuentos">${e.dcto.map(([p, d]) => `<div class="descuento"><b>${p}</b>${d}</div>`).join('')}</div><p class="nota">${e.dctoNota}</p></div>
   <div>${img('paddle', e.aPaddle, '(max-width: 980px) 90vw, 45vw')}</div>
 </div></section>`;
@@ -307,6 +377,7 @@ function contacto(t) {
   <form class="panel" id="form-contacto" novalidate>
     <h2>${c.formT}</h2>
     <div class="campo"><label for="c-nombre">${c.nombre}</label><input id="c-nombre" name="nombre" autocomplete="name" required></div>
+    <div class="campo"><label for="c-motivo">${c.motivo}</label><select id="c-motivo" name="motivo">${c.motivos.map((m) => `<option>${esc(m)}</option>`).join('')}</select></div>
     <div class="campo"><label for="c-mensaje">${c.mensaje}</label><textarea id="c-mensaje" name="mensaje" required></textarea></div>
     <div class="panel__botones"><button class="btn btn--wa" type="submit">${I.wa}${c.porWa}</button><button class="btn btn--linea" type="button" id="enviar-correo">${c.porMail}</button></div>
     <p class="error" role="alert" hidden></p>
